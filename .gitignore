@@ -6,6 +6,7 @@ out-tsc
 .cache
 .output
 .history
+package
 
 # dependencies
 node_modules
@@ -23,6 +24,7 @@ Thumbs.db
 *.pem
 *.log*
 logs*
+*.tgz
 
 # debug
 npm-debug.log*
@@ -49,7 +51,5 @@ yarn.lock
 
 # VSCode
 .vscode/*
-!.vscode/cspell.json
 !.vscode/extensions.json
-!.vscode/launch.json
 !.vscode/settings.json

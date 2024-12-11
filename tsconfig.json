@@ -1,23 +1,18 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "node",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "declaration": true,
-    "declarationDir": "./types",
+    "declarationDir": "./dist/types",
     "outDir": "./dist",
     "resolveJsonModule": true,
     "removeComments": true,
     "newLine": "lf"
   },
-  "include": [
-    "lib/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts"]
 }

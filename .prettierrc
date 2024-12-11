@@ -6,12 +6,10 @@
   "printWidth": 84,
   "arrowParens": "always",
   "trailingComma": "all",
-  "importOrder": [
-    "<THIRD_PARTY_MODULES>",
-    "",
-    "^[./]"
-  ],
+  "bracketSpacing": true,
+  "importOrder": ["<THIRD_PARTY_MODULES>", "", "^@/(.*)$", "", "^[./]"],
   "importOrderParserPlugins": ["typescript"],
   "plugins": ["@ianvs/prettier-plugin-sort-imports"],
-  "proseWrap": "always"
+  "proseWrap": "always",
+  "endOfLine": "lf"
 }

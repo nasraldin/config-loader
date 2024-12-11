@@ -17,41 +17,26 @@ const compat = new FlatCompat({
   allConfig: js.configs.all,
 });
 
-const patchedConfig = fixupConfigRules([...compat.extends('prettier')]);
-
 const tsConfig = ts.config(
   js.configs.recommended,
   ...ts.configs.recommended,
   ...ts.configs.strict,
-  ...ts.configs.stylistic,
 );
 
 const config = [
-  ...compat.plugins('security', 'prettier'),
-  ...patchedConfig,
+  ...compat.plugins('security'),
+  ...fixupConfigRules([...compat.extends('prettier')]),
   ...tsConfig,
   eslintPluginPrettierRecommended,
   {
     files: ['**/*.{js,mjs,ts}'],
     rules: {
-      'linebreak-style': ['error', 'unix'],
       'no-console': 'error',
-      'no-unused-vars': 'off',
       'no-duplicate-imports': 'error',
       'no-empty-function': 'warn',
       'no-empty-pattern': 'warn',
-      'no-plusplus': [
-        'warn',
-        {
-          allowForLoopAfterthoughts: true,
-        },
-      ],
-      quotes: [
-        'error',
-        'single',
-        { avoidEscape: true, allowTemplateLiterals: true },
-      ],
-      '@typescript-eslint/no-unused-vars': 'off',
+      'no-plusplus': ['warn', { allowForLoopAfterthoughts: true }],
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-empty-object-type': [
         1,
         {
@@ -61,7 +46,7 @@ const config = [
     },
   },
   {
-    ignores: ['node_modules', '.history', 'dist'],
+    ignores: ['node_modules', '.history', 'dist', 'package'],
   },
 ];
 
