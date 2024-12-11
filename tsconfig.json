@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "declarationDir": "./dist/types",
+    "outDir": "./dist",
+    "resolveJsonModule": true,
+    "removeComments": true,
+    "newLine": "lf"
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+}
