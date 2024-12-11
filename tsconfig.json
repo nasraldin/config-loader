@@ -10,7 +10,7 @@
     "declarationDir": "./dist/types",
     "outDir": "./dist",
     "resolveJsonModule": true,
-    "removeComments": true,
+    "removeComments": false,
     "newLine": "lf"
   },
   "include": ["**/*.ts"],
