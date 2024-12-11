@@ -1,0 +1,23 @@
+{
+  // List of extensions which should be recommended for developers of this workspace.
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "editorconfig.editorconfig",
+    "wmaurer.change-case",
+    "Orta.vscode-jest",
+    "firsttris.vscode-jest-runner",
+    "hbenl.vscode-test-explorer",
+    "ibm.output-colorizer",
+    "christian-kohler.path-intellisense",
+    "steoates.autoimport",
+    "mikestead.dotenv",
+    "xyz.local-history",
+    "aaron-bond.better-comments",
+    "wayou.vscode-todo-highlight",
+    "redhat.vscode-yaml",
+    "foxundermoon.shell-format",
+    "VisualStudioExptTeam.vscodeintellicode-completions",
+    "visualstudioexptteam.vscodeintellicode"
+  ]
+}
