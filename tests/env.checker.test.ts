@@ -18,81 +18,76 @@ describe('Environment Checks', () => {
     process.env.NODE_ENV = originalNodeEnv;
   });
 
-  it('should correctly identify development environment', () => {
+  it('should detect development environment', () => {
     process.env.NODE_ENV = 'development';
-    // Re-import to get fresh values
-    jest.isolateModules(() => {
-      const { IS_DEV } = require('../lib/env.checker');
-      expect(IS_DEV).toBe(true);
-    });
+    jest.resetModules();
+    const { isDev } = require('../lib/env.checker');
+    expect(isDev).toBe(true);
   });
 
-  it('should correctly identify production environment', () => {
+  it('should detect production environment', () => {
     process.env.NODE_ENV = 'production';
-    jest.isolateModules(() => {
-      const { IS_PROD } = require('../lib/env.checker');
-      expect(IS_PROD).toBe(true);
-    });
+    jest.resetModules();
+    const { isProd } = require('../lib/env.checker');
+    expect(isProd).toBe(true);
   });
 
-  it('should correctly identify test environment', () => {
+  it('should detect test environment', () => {
     process.env.NODE_ENV = 'test';
-    jest.isolateModules(() => {
-      const { IS_TEST } = require('../lib/env.checker');
-      expect(IS_TEST).toBe(true);
-    });
+    jest.resetModules();
+    const { isTest } = require('../lib/env.checker');
+    expect(isTest).toBe(true);
   });
 
-  it('should correctly identify staging environment', () => {
+  it('should detect staging environment', () => {
     process.env.NODE_ENV = 'staging';
-    jest.isolateModules(() => {
-      const { IS_STAGE } = require('../lib/env.checker');
-      expect(IS_STAGE).toBe(true);
-    });
+    jest.resetModules();
+    const { isStage } = require('../lib/env.checker');
+    expect(isStage).toBe(true);
   });
 
-  it('should correctly identify UAT environment', () => {
+  it('should detect uat environment', () => {
     process.env.NODE_ENV = 'uat';
-    jest.isolateModules(() => {
-      const { IS_UAT } = require('../lib/env.checker');
-      expect(IS_UAT).toBe(true);
-    });
+    jest.resetModules();
+    const { isUat } = require('../lib/env.checker');
+    expect(isUat).toBe(true);
   });
 });
 
-describe('Server/Browser Environment Detection', () => {
-  describe('IS_SERVER and IS_BROWSER', () => {
+describe('Server and Browser Detection', () => {
+  describe('when window is not defined', () => {
     beforeEach(() => {
-      // Reset modules before each test to get fresh values
+      // @ts-expect-error - Ensure global.window are deleted
+      delete global.window;
+      // @ts-expect-error - Ensure global.document are deleted
+      delete global.document;
       jest.resetModules();
     });
 
-    it('should correctly identify server environment', () => {
-      // @ts-expect-error - Ensure global.window are undefined
-      delete global.window;
-      // @ts-expect-error - Ensure global.document are undefined
-      delete global.document;
+    it('should detect server environment', () => {
+      const { isServer, isBrowser } = require('../lib/env.checker');
+      expect(isServer).toBe(true);
+      expect(isBrowser).toBe(false);
+    });
+  });
 
-      jest.isolateModules(() => {
-        const { IS_SERVER, IS_BROWSER } = require('../lib/env.checker');
-        expect(IS_SERVER).toBe(true);
-        expect(IS_BROWSER).toBe(false);
-      });
+  describe('when window is defined', () => {
+    beforeEach(() => {
+      // @ts-expect-error - Mock window for testing
+      global.window = {};
+      // @ts-expect-error - Mock document for testing
+      global.document = {};
+      jest.resetModules();
     });
 
-    it('should correctly identify browser environment', () => {
-      // @ts-expect-error - Ensure global.window are objects
-      global.window = {};
-      // @ts-expect-error - Ensure global.document are objects
-      global.document = {};
+    it('should detect browser environment', () => {
+      const { isServer, isBrowser } = require('../lib/env.checker');
+      expect(isServer).toBe(false);
+      expect(isBrowser).toBe(true);
+    });
 
-      jest.isolateModules(() => {
-        const { IS_SERVER, IS_BROWSER } = require('../lib/env.checker');
-        expect(IS_SERVER).toBe(false);
-        expect(IS_BROWSER).toBe(true);
-      });
-
-      // Clean up
+    // Clean up
+    afterEach(() => {
       // @ts-expect-error - Ensure global.window are deleted
       delete global.window;
       // @ts-expect-error - Ensure global.document are deleted
@@ -115,13 +110,19 @@ describe('SSR/CSR Detection', () => {
   });
 
   it('should correctly identify CSR environment', () => {
-    // Mock window object
-    // @ts-expect-error - Ensure global.window are object
+    // Mock window and document objects
+    // @ts-expect-error - Mock window for testing
     global.window = {};
+    // @ts-expect-error - Mock document for testing
+    global.document = {};
+
     expect(isCSR()).toBe(true);
+
     // Clean up
-    // @ts-expect-error - Ensure global.window are deleted
+    // @ts-expect-error - Clean up window mock
     delete global.window;
+    // @ts-expect-error - Clean up document mock
+    delete global.document;
   });
 });
 

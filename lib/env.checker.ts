@@ -12,12 +12,12 @@
  *
  * @example
  * // Check current environment
- * if (IS_DEV) {
+ * if (isDev) {
  *   console.log('Running in development mode');
  * }
  *
  * // Check if running on server
- * if (IS_SERVER) {
+ * if (isServer) {
  *   console.log('Running on server');
  * }
  *
@@ -53,54 +53,54 @@ export const ENV = {
 } as const;
 
 /**
- * Check if app is running in the Browser.
- * @returns {boolean} true if accessible from the Browser, else false.
+ * Check if code is running in a browser environment.
+ * @returns {boolean} true if browser, otherwise false.
  */
-export const IS_BROWSER =
+export const isBrowser =
   typeof window !== 'undefined' && typeof document !== 'undefined';
 
 /**
  * Check if code is running on the server.
  * @returns {boolean} true if server, otherwise false.
  */
-export const IS_SERVER = !IS_BROWSER;
+export const isServer = !isBrowser;
 
 /**
  * Check current environment is development.
  *
  * @returns {boolean}: true if development, else false.
  */
-export const IS_DEV =
+export const isDev =
   (typeof process !== 'undefined' && process.env?.NODE_ENV === ENV.Development) ||
-  (IS_BROWSER && window.location?.hostname === 'localhost');
+  (isBrowser && window.location?.hostname === 'localhost');
 
 /**
  * Check current environment is production.
  *
  * @returns {boolean}: true if production, else false.
  */
-export const IS_PROD = process.env.NODE_ENV === ENV.Production;
+export const isProd = process.env.NODE_ENV === ENV.Production;
 
 /**
  * Check current environment is test.
  *
  * @returns {boolean}: true if test, else false.
  */
-export const IS_TEST = process.env.NODE_ENV === ENV.Test;
+export const isTest = process.env.NODE_ENV === ENV.Test;
 
 /**
  * Check current environment is staging.
  *
  * @returns {boolean}: true if staging, else false.
  */
-export const IS_STAGE = process.env.NODE_ENV === ENV.Staging;
+export const isStage = process.env.NODE_ENV === ENV.Staging;
 
 /**
  * Check current environment is uat (User Acceptance Testing).
  *
  * @returns {boolean}: true if uat, else false.
  */
-export const IS_UAT = process.env.NODE_ENV === ENV.UAT;
+export const isUat = process.env.NODE_ENV === ENV.UAT;
 
 /**
  * Check if the current execution is happening on the server during SSR.
@@ -108,7 +108,7 @@ export const IS_UAT = process.env.NODE_ENV === ENV.UAT;
  * @returns {boolean}: true if server-side rendering, else false.
  */
 export const isSSR = (): boolean => {
-  return IS_SERVER;
+  return typeof window === 'undefined' || typeof document === 'undefined';
 };
 
 /**
@@ -117,7 +117,7 @@ export const isSSR = (): boolean => {
  * @returns {boolean}: true if client-side rendering, else false.
  */
 export const isCSR = (): boolean => {
-  return !IS_SERVER;
+  return typeof window !== 'undefined' && typeof document !== 'undefined';
 };
 
 /**
