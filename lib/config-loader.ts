@@ -48,6 +48,7 @@ const loadServerModules = async () => {
     }
     return true;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.warn('Server-side modules not available:', error);
     return false;
   }
@@ -197,6 +198,7 @@ export class ConfigLoader<T extends ConfigObject> {
 
     const isServerModulesLoaded = await loadServerModules();
     if (!isServerModulesLoaded) {
+      // eslint-disable-next-line no-console
       console.warn('Server-side modules not available, returning empty config');
       return this.validateConfig({} as DeepPartial<T>);
     }
