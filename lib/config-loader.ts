@@ -30,8 +30,6 @@ import ajvFormats from 'ajv-formats';
 
 import { ENV, Environment } from './env.checker';
 
-const defaultConfigDir = 'config';
-
 /**
  * Base configuration interface (optional)
  */
@@ -50,7 +48,12 @@ export type ConfigValue = string | number | boolean | null | undefined;
  * Type for configuration objects
  */
 export type ConfigObject = {
-  [key: string]: ConfigValue | ConfigObject | ConfigArray;
+  [K in string]?:
+    | ConfigValue
+    | ConfigArray
+    | {
+        [K in string]?: ConfigValue | ConfigArray | ConfigObject;
+      };
 };
 
 /**
@@ -110,7 +113,7 @@ interface NodeError extends Error {
  * @class ConfigurationError
  * @extends Error
  */
-class ConfigurationError extends Error {
+export class ConfigurationError extends Error {
   /**
    * @param message - Error message
    * @param errors - Additional error details
@@ -127,6 +130,8 @@ class ConfigurationError extends Error {
 
 /** Cache storage for configurations */
 const configCache = new Map<string, Config<unknown>>();
+
+const defaultConfigDir = 'config';
 
 /**
  * Type-safe configuration loader
