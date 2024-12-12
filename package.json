@@ -2,6 +2,7 @@
   "name": "quickload",
   "version": "1.0.2",
   "description": "A simple utility to load json config files.",
+  "type": "module",
   "keywords": [
     "config",
     "config-loader",
@@ -29,10 +30,9 @@
     "pnpm": ">=8.x"
   },
   "main": "dist/index.js",
-  "types": "types/index.d.ts",
+  "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "types",
     "README.md",
     "LICENSE"
   ],
