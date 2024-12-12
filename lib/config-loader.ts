@@ -23,14 +23,36 @@
  * @see {@link https://www.npmjs.com/package/quickload|NPM Package}
  */
 
-import fs from 'fs/promises';
-import path from 'path';
 import Ajv, { JSONSchemaType } from 'ajv';
 import ajvFormats from 'ajv-formats';
 
-import { ENV, Environment } from './env.checker';
+import { ENV, Environment, isSSR } from './env.checker';
 
-const defaultConfigDir = 'config';
+// Declare types for Node.js modules
+type FSPromises = typeof import('fs/promises');
+type Path = typeof import('path');
+
+let fsPromises: FSPromises | null = null;
+let pathModule: Path | null = null;
+
+// Initialize Node.js modules only on server side
+const loadServerModules = async () => {
+  if (typeof process === 'undefined') return false;
+
+  try {
+    if (!fsPromises) {
+      fsPromises = await import('fs/promises').catch(() => null);
+    }
+    if (!pathModule) {
+      pathModule = await import('path').catch(() => null);
+    }
+    return true;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.warn('Server-side modules not available:', error);
+    return false;
+  }
+};
 
 /**
  * Base configuration interface (optional)
@@ -50,7 +72,12 @@ export type ConfigValue = string | number | boolean | null | undefined;
  * Type for configuration objects
  */
 export type ConfigObject = {
-  [key: string]: ConfigValue | ConfigObject | ConfigArray;
+  [K in string]?:
+    | ConfigValue
+    | ConfigArray
+    | {
+        [K in string]?: ConfigValue | ConfigArray | ConfigObject;
+      };
 };
 
 /**
@@ -99,6 +126,9 @@ export enum ConfigErrorCode {
   PARSE_ERROR = 'PARSE_ERROR',
   VALIDATION_ERROR = 'VALIDATION_ERROR',
   MERGE_ERROR = 'MERGE_ERROR',
+  LOAD_ERROR = 'LOAD_ERROR',
+  FILE_READ_ERROR = 'FILE_READ_ERROR',
+  DIR_READ_ERROR = 'DIR_READ_ERROR',
 }
 
 interface NodeError extends Error {
@@ -110,7 +140,7 @@ interface NodeError extends Error {
  * @class ConfigurationError
  * @extends Error
  */
-class ConfigurationError extends Error {
+export class ConfigurationError extends Error {
   /**
    * @param message - Error message
    * @param errors - Additional error details
@@ -128,6 +158,8 @@ class ConfigurationError extends Error {
 /** Cache storage for configurations */
 const configCache = new Map<string, Config<unknown>>();
 
+const defaultConfigDir = 'config';
+
 /**
  * Type-safe configuration loader
  */
@@ -144,7 +176,6 @@ export class ConfigLoader<T extends ConfigObject> {
       includeBaseConfig: options.includeBaseConfig ?? false,
     };
 
-    // Initialize AJV with strict mode
     this.ajv = new Ajv({
       allErrors: true,
       strict: true,
@@ -156,34 +187,32 @@ export class ConfigLoader<T extends ConfigObject> {
 
   /**
    * Loads and validates configuration
-   * @returns Promise resolving to the loaded and validated configuration
-   * @throws ConfigurationError if loading or validation fails
    */
   async load(): Promise<Config<T>> {
-    const env = (process.env.NODE_ENV as Environment) || this.options.defaultEnv;
-    const cacheKey = `${this.options.configDir}-${env}`;
+    const env = (process.env.NODE_ENV as Environment) ?? this.options.defaultEnv;
 
-    // Check cache if enabled
-    if (this.options.cache && configCache.has(cacheKey)) {
-      return configCache.get(cacheKey) as Config<T>;
+    if (!isSSR()) {
+      // Client-side implementation
+      return this.validateConfig({} as DeepPartial<T>);
+    }
+
+    const isServerModulesLoaded = await loadServerModules();
+    if (!isServerModulesLoaded) {
+      // eslint-disable-next-line no-console
+      console.warn('Server-side modules not available, returning empty config');
+      return this.validateConfig({} as DeepPartial<T>);
     }
 
     try {
       const config = await this.loadAndMergeConfigs(env);
-      const validConfig = this.validateConfig(config);
-
-      if (this.options.cache) {
-        configCache.set(cacheKey, validConfig);
-      }
-
-      return validConfig;
+      return this.validateConfig(config);
     } catch (error) {
       if (error instanceof ConfigurationError) {
         throw error;
       }
       throw new ConfigurationError(
         'Failed to load configuration',
-        ConfigErrorCode.PARSE_ERROR,
+        ConfigErrorCode.LOAD_ERROR,
         error,
       );
     }
@@ -191,23 +220,62 @@ export class ConfigLoader<T extends ConfigObject> {
 
   /**
    * Reads and parses a JSON configuration file
-   * @param filePath - Path to the JSON file
-   * @returns Promise resolving to the parsed configuration
-   * @throws ConfigurationError if file reading or parsing fails
    */
   private async loadFile(filePath: string): Promise<DeepPartial<T>> {
+    if (!isSSR() || !fsPromises) {
+      return {} as DeepPartial<T>;
+    }
+
     try {
-      const content = await fs.readFile(filePath, 'utf-8');
+      const content = await fsPromises.readFile(filePath, 'utf-8');
       return JSON.parse(content) as DeepPartial<T>;
     } catch (err) {
       if (err instanceof Error) {
         throw new ConfigurationError(
-          `Error reading or parsing file ${filePath}: ${err.message}`,
-          ConfigErrorCode.FILE_NOT_FOUND,
+          `Failed to load file: ${filePath}`,
+          ConfigErrorCode.FILE_READ_ERROR,
           err,
         );
       }
       throw err;
+    }
+  }
+
+  /**
+   * Loads configuration files from directory
+   */
+  private async loadConfigFiles(dirPath: string): Promise<DeepPartial<T>> {
+    if (!isSSR() || !fsPromises || !pathModule) {
+      return {} as DeepPartial<T>;
+    }
+
+    try {
+      const files = await fsPromises.readdir(dirPath);
+      const jsonFiles = files.filter((file) => file.endsWith('.json'));
+
+      const configs = await Promise.all(
+        jsonFiles.map(async (file) => {
+          const filePath = pathModule?.join(dirPath, file);
+          if (!filePath) {
+            return {} as DeepPartial<T>;
+          }
+          return this.loadFile(filePath);
+        }),
+      );
+
+      return configs.reduce<DeepPartial<T>>(
+        (acc, config) => this.mergeConfigs(acc, config),
+        {} as DeepPartial<T>,
+      );
+    } catch (err) {
+      if (err instanceof Error && (err as NodeError).code === 'ENOENT') {
+        return {} as DeepPartial<T>;
+      }
+      throw new ConfigurationError(
+        `Failed to load config files from directory: ${dirPath}`,
+        ConfigErrorCode.DIR_READ_ERROR,
+        err,
+      );
     }
   }
 
@@ -258,42 +326,19 @@ export class ConfigLoader<T extends ConfigObject> {
   }
 
   /**
-   * Loads all JSON configuration files from a directory
-   * @param dirPath - Directory path containing configuration files
-   * @returns Promise resolving to merged configuration from all files
-   * @throws ConfigurationError if directory reading fails
-   */
-  private async loadConfigFiles(dirPath: string): Promise<DeepPartial<T>> {
-    try {
-      const files = await fs.readdir(dirPath);
-      const jsonFiles = files.filter((file) => file.endsWith('.json'));
-
-      const configs = await Promise.all(
-        jsonFiles.map(async (file) => {
-          const filePath = path.join(dirPath, file);
-          return this.loadFile(filePath);
-        }),
-      );
-
-      return configs.reduce<DeepPartial<T>>(
-        (acc, config) => this.mergeConfigs(acc, config),
-        {} as DeepPartial<T>,
-      );
-    } catch (err) {
-      if (err instanceof Error && (err as NodeError).code === 'ENOENT') {
-        return {} as DeepPartial<T>;
-      }
-      throw err;
-    }
-  }
-
-  /**
    * Loads and merges configuration files
    */
   private async loadAndMergeConfigs(env: Environment): Promise<DeepPartial<T>> {
+    if (!pathModule) {
+      return {} as DeepPartial<T>;
+    }
+
+    const defaultPath = pathModule.join(this.options.configDir, 'default');
+    const envPath = pathModule.join(this.options.configDir, env);
+
     const [defaultConfig, envConfig] = await Promise.all([
-      this.loadConfigFiles(path.join(this.options.configDir, 'default')),
-      this.loadConfigFiles(path.join(this.options.configDir, env)),
+      this.loadConfigFiles(defaultPath),
+      this.loadConfigFiles(envPath),
     ]);
 
     return this.mergeConfigs(defaultConfig, envConfig);

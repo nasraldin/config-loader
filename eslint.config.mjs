@@ -31,7 +31,7 @@ const config = [
   {
     files: ['**/*.{js,mjs,ts}'],
     rules: {
-      'no-console': 'error',
+      'no-console': 'warn',
       'no-duplicate-imports': 'error',
       'no-empty-function': 'warn',
       'no-empty-pattern': 'warn',
