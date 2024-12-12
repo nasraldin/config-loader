@@ -1,5 +1,7 @@
 # quickload
 
+NPM Package: [quickload](https://www.npmjs.com/package/quickload)
+
 ## Introduction
 
 A robust and type-safe configuration loader for Node.js applications with support
