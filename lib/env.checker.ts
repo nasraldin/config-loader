@@ -53,11 +53,26 @@ export const ENV = {
 } as const;
 
 /**
+ * Check if app is running in the Browser.
+ * @returns {boolean} true if accessible from the Browser, else false.
+ */
+export const IS_BROWSER =
+  typeof window !== 'undefined' && typeof document !== 'undefined';
+
+/**
+ * Check if code is running on the server.
+ * @returns {boolean} true if server, otherwise false.
+ */
+export const IS_SERVER = !IS_BROWSER;
+
+/**
  * Check current environment is development.
  *
  * @returns {boolean}: true if development, else false.
  */
-export const IS_DEV = process.env.NODE_ENV === ENV.Development;
+export const IS_DEV =
+  (typeof process !== 'undefined' && process.env?.NODE_ENV === ENV.Development) ||
+  (IS_BROWSER && window.location?.hostname === 'localhost');
 
 /**
  * Check current environment is production.
@@ -88,31 +103,22 @@ export const IS_STAGE = process.env.NODE_ENV === ENV.Staging;
 export const IS_UAT = process.env.NODE_ENV === ENV.UAT;
 
 /**
- * Check if app is running on a NodeJS server.
- * @returns {boolean} true if running on the server (NodeJS).
- */
-export const IS_SERVER = typeof window === 'undefined';
-
-/**
- * Check if app is running in the Browser.
- * @returns {boolean} true if accessible from the Browser, else false.
- */
-export const IS_BROWSER =
-  typeof window !== 'undefined' && typeof document !== 'undefined';
-
-/**
- * Check if the current execution is happening on the server during SSR like in Next.js etc..
+ * Check if the current execution is happening on the server during SSR.
  *
  * @returns {boolean}: true if server-side rendering, else false.
  */
-export const isSSR = (): boolean => typeof window === 'undefined';
+export const isSSR = (): boolean => {
+  return IS_SERVER;
+};
 
 /**
- * Check if the current execution is happening on the client during CSR like in Next.js etc..
+ * Check if the current execution is happening on the client during CSR.
  *
  * @returns {boolean}: true if client-side rendering, else false.
  */
-export const isCSR = (): boolean => typeof window !== 'undefined';
+export const isCSR = (): boolean => {
+  return !IS_SERVER;
+};
 
 /**
  * Check if a specific environment variable is defined.
@@ -124,5 +130,10 @@ export const isCSR = (): boolean => typeof window !== 'undefined';
  * @returns {boolean}: true if the environment variable is defined, else false.
  */
 export const isEnvVarDefined = (key: string): boolean => {
-  return typeof process.env[key] !== 'undefined' && process.env[key] !== '';
+  if (!key) return false;
+  return (
+    typeof process !== 'undefined' &&
+    typeof process.env[key] !== 'undefined' &&
+    process.env[key] !== ''
+  );
 };
