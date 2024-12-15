@@ -1,6 +1,6 @@
 {
   "name": "quickload",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A simple utility to load json config files.",
   "type": "module",
   "keywords": [
